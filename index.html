@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remorse - Discord Profiles</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- React & ReactDOM (CDN) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX compilation in the browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom Configuration & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+        .bg-noise {
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+');
+            mix-blend-mode: overlay;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // =====================================================================
+        // ⚙️ CONFIGURATION: PUT YOUR DISCORD IDS HERE
+        // =====================================================================
+        const BROTHER_IDS = [
+            '727135136302366722', // Replace this with your actual Discord ID
+            // '1398502471281676351', // Add more IDs here like this
+        ];
+
+        const SECOND_GEN_IDS = [
+            // '1146826524599791757',
+            // '734761746568577056',
+            // '1359508793095885075',
+        ];
+        // =====================================================================
+
+
+        // --- HELPER FUNCTIONS FOR DISCORD CDN ---
+        const getAvatarUrl = (user) => {
+            if (!user.avatar) return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(user.id) >> 22n) % 6}.png`;
+            return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`;
+        };
+
+        const getBannerUrl = (user) => {
+            if (!user.banner) return null;
+            return `https://cdn.discordapp.com/banners/${user.id}/${user.banner}.png?size=600`;
+        };
+
+        // --- AUDIO SETUP ---
+        // Make sure 'hover-sound.mp3' is in the same folder as this HTML file
+        const hoverAudio = new Audio('hover-sound.mp3');
+        hoverAudio.volume = 0.5; 
+
+        const playHoverSound = () => {
+            hoverAudio.currentTime = 0; 
+            hoverAudio.play().catch(e => console.log("Audio play blocked:", e));
+        };
+
+        // --- COMPONENTS ---
+        const StatusIndicator = ({ status }) => {
+            const colors = { online: 'bg-green-500', idle: 'bg-yellow-500', dnd: 'bg-red-500', offline: 'bg-gray-500' };
+            return <span className={`absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-[#0a0f1c] ${colors[status] || colors.offline}`} />;
+        };
+
+        const ProfileCard = ({ user }) => {
+            return (
+                <div 
+                    onMouseEnter={playHoverSound} 
+                    className="relative w-full max-w-[320px] rounded-xl overflow-hidden border border-blue-900/50 bg-[#0a0f1c] shadow-lg shadow-blue-900/20 group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-blue-500/20"
+                >
+                    <div 
+                        className="h-[120px] w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" 
+                        style={{ backgroundImage: `url(${user.banner || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80'})` }} 
+                    />
+                    
+                    <div className="px-4 pb-5 relative z-10">
+                        <div className="relative -mt-10 mb-3 w-20 h-20">
+                            <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full border-4 border-[#0a0f1c] object-cover bg-gray-800" />
+                            <StatusIndicator status={user.status} />
+                        </div>
+                        <h3 className="text-white font-semibold text-lg tracking-wide">{user.name}</h3>
+                        <p className="text-blue-400/80 font-mono text-xs mt-1">@{user.handle}</p>
+                    </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1c] via-[#0a0f1c]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 pointer-events-none">
+                        <p className="text-blue-200 text-sm font-medium border-t border-blue-800/50 pt-3">{user.details}</p>
+                    </div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [brothers, setBrothers] = useState([]);
+            const [secondGen, setSecondGen] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            // Fetch a single profile from Lanyard
+            const fetchProfileById = async (id) => {
+                try {
+                    const res = await fetch(`https://api.lanyard.rest/v1/users/${id}`);
+                    const json = await res.json();
+                    
+                    if (!json.success) {
+                        console.warn(`User ${id} not found on Lanyard.`);
+                        return null;
+                    }
+
+                    const dUser = json.data.discord_user;
+                    return {
+                        id: dUser.id,
+                        name: dUser.global_name || dUser.username,
+                        handle: dUser.username,
+                        avatar: getAvatarUrl(dUser),
+                        banner: getBannerUrl(dUser),
+                        status: json.data.discord_status,
+                        details: "Family Member" 
+                    };
+                } catch (err) {
+                    console.error(`Error fetching ${id}:`, err);
+                    return null;
+                }
+            };
+
+            // Fetch all profiles on page load
+            useEffect(() => {
+                const loadAllProfiles = async () => {
+                    setLoading(true);
+                    
+                    // Fetch Brothers
+                    const brotherPromises = BROTHER_IDS.map(id => fetchProfileById(id));
+                    const brotherResults = await Promise.all(brotherPromises);
+                    setBrothers(brotherResults.filter(Boolean)); // Filter out nulls
+
+                    // Fetch 2nd Gen
+                    const secondGenPromises = SECOND_GEN_IDS.map(id => fetchProfileById(id));
+                    const secondGenResults = await Promise.all(secondGenPromises);
+                    setSecondGen(secondGenResults.filter(Boolean)); // Filter out nulls
+
+                    setLoading(false);
+                };
+
+                loadAllProfiles();
+            }, []); // Empty dependency array means this runs once on page load
+
+            return (
+                <div className="min-h-screen bg-blue-950 text-gray-200 font-sans selection:bg-blue-500/30 relative">
+                    <div className="fixed inset-0 pointer-events-none z-0">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(29,78,216,0.15),transparent_70%)]" />
+                        <div className="absolute inset-0 opacity-[0.03] bg-noise" />
+                    </div>
+
+                    {/* Navigation */}
+                    <nav className="relative z-10 flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-900/50 border border-blue-700 flex items-center justify-center">
+                                <i data-lucide="globe" className="w-5 h-5 text-blue-400"></i>
+                            </div>
+                            <span className="font-bold text-xl tracking-[0.2em] text-white uppercase">Remorse</span>
+                        </div>
+                        <div className="hidden md:flex gap-8 text-xs font-medium tracking-[0.15em] text-gray-400">
+                            <a href="#" className="hover:text-blue-400 transition-colors">HOME</a>
+                            <a href="#" className="hover:text-blue-400 transition-colors">MEMBERS</a>
+                            <a href="#" className="hover:text-blue-400 transition-colors">AFFILIATES</a>
+                            <a href="#" className="hover:text-blue-400 transition-colors">GALLERIES</a>
+                            <a href="#" className="hover:text-blue-400 transition-colors">CITIES</a>
+                        </div>
+                    </nav>
+
+                    {/* Header & Search */}
+                    <div className="relative z-10 max-w-7xl mx-auto px-8 mt-12 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <p className="text-gray-400 font-mono text-sm tracking-wide text-center md:text-left">
+                            Hover a card — click the <span className="text-blue-400 font-bold">remorse</span> name for family details
+                        </p>
+                        
+                        <div className="relative w-full md:w-72">
+                            <input 
+                                type="text" 
+                                placeholder="Search remorse..." 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-[#0a0f1c] border border-blue-900/60 rounded-lg py-2.5 pl-4 pr-10 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                            />
+                            <i data-lucide="search" className="absolute right-3 top-3 w-4 h-4 text-gray-500"></i>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <main className="relative z-10 max-w-7xl mx-auto px-8 pb-24">
+                        
+                        {loading ? (
+                            <div className="text-center mt-32 text-blue-400 font-mono animate-pulse">
+                                Fetching Discord profiles...
+                            </div>
+                        ) : (
+                            <>
+                                {/* Brothers Section */}
+                                <section className="mt-16">
+                                    <h2 className="text-center text-blue-400 font-mono text-sm tracking-[0.3em] mb-10">BROTHERS</h2>
+                                    <div className="flex flex-wrap justify-center gap-6 min-h-[250px] items-start">
+                                        {brothers.length > 0 ? (
+                                            brothers.map(user => <ProfileCard key={user.id} user={user} />)
+                                        ) : (
+                                            <div className="text-gray-500 font-mono text-sm border border-dashed border-blue-900/50 rounded-xl p-8 text-center w-full max-w-[320px]">
+                                                No Brothers found. Add your Discord ID to the `BROTHER_IDS` list in the code.
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+
+                                {/* 2nd Generation Section */}
+                                <section className="mt-24">
+                                    <h2 className="text-center text-blue-400 font-mono text-sm tracking-[0.3em] mb-10">2ND GENERATION</h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-items-center">
+                                        {secondGen.length > 0 ? (
+                                            secondGen.map(user => <ProfileCard key={user.id} user={user} />)
+                                        ) : (
+                                            <div className="col-span-full text-gray-500 font-mono text-sm border border-dashed border-blue-900/50 rounded-xl p-8 text-center w-full max-w-[320px]">
+                                                No 2nd Gen members found. Add Discord IDs to the `SECOND_GEN_IDS` list in the code.
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            </>
+                        )}
+                    </main>
+
+                    {/* Footer */}
+                    <div className="fixed bottom-6 right-6 z-50">
+                        <a href="#" className="flex items-center gap-2 bg-[#0a0f1c] border border-blue-900/50 px-4 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-colors shadow-lg">
+                            <i data-lucide="zap" className="w-4 h-4 text-blue-400"></i>
+                            Powered by Netlify
+                        </a>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+        setTimeout(() => { lucide.createIcons(); }, 100);
+    </script>
+</body>
+</html>
